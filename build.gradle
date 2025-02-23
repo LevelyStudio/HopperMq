@@ -23,10 +23,10 @@ dependencies {
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
 
     api 'com.rabbitmq:amqp-client:5.22.0'
-    api "gg.levely.system:eventbus:1.0.0"
 
+    implementation "gg.levely.system:eventbus:1.0.0"
     implementation 'org.reflections:reflections:0.10.2'
-    implementation("ch.qos.logback:logback-classic:1.3.15")
+    implementation "ch.qos.logback:logback-classic:1.3.15"
 }
 
 publishing {
