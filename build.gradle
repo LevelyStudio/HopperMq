@@ -13,7 +13,7 @@ repositories {
     maven {
         url = uri("https://maven.pkg.github.com/LevelyStudio/EventBus")
         credentials {
-            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
             password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
         }
     }
