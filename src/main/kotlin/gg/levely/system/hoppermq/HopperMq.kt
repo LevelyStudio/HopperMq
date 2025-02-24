@@ -31,6 +31,10 @@ class HopperMq(url: String, val author: String) : Closeable {
     private val defaultRabbitConsumer = DefaultRabbitConsumer(this)
     private val queues: MutableMap<String, RabbitQueue> = mutableMapOf()
 
+    constructor(url: String, selfQueue: RabbitQueue) : this(url, selfQueue.getQueue()) {
+        bindQueue(selfQueue)
+    }
+
     init {
         try {
             val connectionFactory = ConnectionFactory().apply {
