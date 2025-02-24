@@ -118,7 +118,7 @@ packetRegistry.register("example-packet", ExamplePacket::class.java)
 > ```kotlin
 > packetRegistry.register("com.yourpackage.packets")
 > ```
-
+> 🚨 **Important:** For this to work, all packets in the package **must be annotated with** `@RabbitPacketLabel`. Otherwise, they won't be detected.
 ### 4️⃣ Listening for Packets
 
 To handle incoming packets, subscribe to them via the event bus.
