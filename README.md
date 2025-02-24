@@ -94,7 +94,6 @@ class ExamplePacket : RabbitPacket {
     
     constructor(message: String) {
         this.message = message
-        metadata["author"] = "System" // Example of adding metadata
     }
     
     override fun write(output: DataOutputStream) {
