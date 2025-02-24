@@ -48,7 +48,7 @@ tasks.register("javadocJar", Jar) {
 
 publishing {
     publications {
-        maven(MavenPublication) {
+        mavenJava(MavenPublication) {
             groupId = 'gg.levely.system'
             artifactId = 'hoppermq'
 
