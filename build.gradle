@@ -35,15 +35,11 @@ dependencies {
     implementation "ch.qos.logback:logback-classic:$logbackVersion"
 }
 
-// Génération des artefacts sources et Javadoc
-tasks.register("sourcesJar", Jar) {
-    archiveClassifier.set("sources")
-    from sourceSets.main.allSource
-}
+java {
+    withSourcesJar()
 
-tasks.register("javadocJar", Jar) {
-    archiveClassifier.set("javadoc")
-    from javadoc
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 publishing {
@@ -53,9 +49,6 @@ publishing {
             artifactId = 'hoppermq'
 
             from components.java
-
-            artifact tasks.sourcesJar
-            artifact tasks.javadocJar
         }
     }
 
@@ -71,9 +64,6 @@ publishing {
     }
 }
 
-test {
-    useJUnitPlatform()
-}
 
 kotlin {
     jvmToolchain(8)
