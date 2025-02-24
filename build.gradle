@@ -29,7 +29,7 @@ ext {
 
 dependencies {
     implementation "com.rabbitmq:amqp-client:$amqpClientVersion"
-    implementation "gg.levely.system:eventbus:$eventBusVersion"
+    api "gg.levely.system:eventbus:$eventBusVersion"
 
     implementation "org.reflections:reflections:$reflectionsVersion"
     implementation "ch.qos.logback:logback-classic:$logbackVersion"
