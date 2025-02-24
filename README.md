@@ -14,7 +14,7 @@ HopperMq is a lightweight and efficient Kotlin library designed to simplify inte
 
 ## 📥 Installation
 
-To install **HopperMq**, add the **GitHub Package repository** to your project:
+To install **HopperMq**, add the **[GitHub Packages](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry)** to your project:
 
 ### 🔹 Gradle (Groovy DSL)
 
