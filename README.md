@@ -1,13 +1,14 @@
 # 🐰 HopperMq
 
-HopperMq is a lightweight and efficient Kotlin library designed to simplify interactions with **RabbitMQ**, providing an intuitive API for message queuing, event-driven communication, and packet handling.
+HopperMq is a lightweight and efficient Kotlin library designed to simplify interactions with **RabbitMQ**, providing an intuitive API for message queuing, event-driven communication, and structured packet handling.
 
 ## 🚀 Features
 
 - 📦 **Simplified RabbitMQ Integration** – Abstracts the complexity of managing connections, exchanges, and queues.
-- 🎯 **Packet-Based Messaging** – Allows structured data communication with serialization and deserialization.
+- 🎯 **Packet-Based Messaging** – Allows structured data communication with serialization, deserialization, and metadata support.
 - 🛠 **Customizable Queues & Exchanges** – Supports both direct queues and exchange-based messaging.
 - 🎧 **Event-Driven Model** – Subscribe to packets effortlessly using an event bus.
+- 📋 **Packet Metadata Support** – Each packet can store additional contextual information.
 
 ---
 
@@ -29,7 +30,7 @@ repositories {
 }
 
 dependencies {
-    implementation "gg.levely.system:hoppermq:0.0.1"
+    implementation "gg.levely.system:hoppermq:0.1.0"
 }
 ```
 
@@ -47,7 +48,7 @@ repositories {
 }
 
 dependencies {
-    implementation("gg.levely.system:hoppermq:0.0.1")
+    implementation("gg.levely.system:hoppermq:0.1.0")
 }
 ```
 
@@ -73,11 +74,13 @@ Since GitHub Packages requires authentication, you must provide a **GitHub Perso
 
 ### 1️⃣ Initialize HopperMq
 
+Now, `HopperMq` requires an **author parameter** in the constructor:
+
 ```kotlin
 val hopperMq = HopperMq("amqp://your-rabbitmq-url", "YourAppName")
 ```
 
-### 2️⃣ Creating a Packet
+### 2️⃣ Creating a Packet (with Metadata Support)
 
 Packets are structured messages that can be sent through RabbitMQ.
 
@@ -91,6 +94,7 @@ class ExamplePacket : RabbitPacket {
     
     constructor(message: String) {
         this.message = message
+        metadata["author"] = "System" // Example of adding metadata
     }
     
     override fun write(output: DataOutputStream) {
@@ -108,9 +112,9 @@ class ExamplePacket : RabbitPacket {
 Before sending or receiving packets, they must be **registered** in the `PacketRegistry`.
 
 ```kotlin
-val packetRegistry = hopperMq.getPacketRegistry()
+val packetRegistry = hopperMq.packetRegistry
 
-packetRegistry.register("example-packet", ExamplePacket::class.java)
+packetRegistry.register(ExamplePacket::class.java)
 ```
 
 > **💡 Automatic Registration:**  
@@ -119,15 +123,16 @@ packetRegistry.register("example-packet", ExamplePacket::class.java)
 > packetRegistry.register("com.yourpackage.packets")
 > ```
 > 🚨 **Important:** For this to work, all packets in the package **must be annotated with** `@RabbitPacketLabel`. Otherwise, they won't be detected.
+
 ### 4️⃣ Listening for Packets
 
 To handle incoming packets, subscribe to them via the event bus.
 
 ```kotlin
-val rabbitBus = hopperMq.getRabbitBus()
+val rabbitBus = hopperMq.rabbitBus
 
 rabbitBus.subscribe(ExamplePacket::class.java) { event ->
-    println("Received packet with message: ${event.message}")
+    println("Received packet with message: ${event.message}, sent by ${event.author ?: "Unknown"}")
 }
 ```
 
@@ -155,10 +160,24 @@ hopperMq.publish(commonQueue, ExamplePacket("Hello from HopperMq!"))
 
 ## 📌 Advanced Usage
 
-### ➤ Check Connection Status
+### ➤ Accessing Packet Metadata
+
+Packets now support metadata, allowing extra contextual information to be attached.
 
 ```kotlin
-if (hopperMq.isConnected()) {
+val packet = ExamplePacket("Test Message")
+packet.metadata["timestamp"] = System.currentTimeMillis()
+
+println("Packet Author: ${packet.metadata["author"]}")
+println("Timestamp: ${packet.metadata["timestamp"]}")
+```
+
+### ➤ Check Connection Status
+
+Instead of `hopperMq.isConnected()`, **use the new computed property**:
+
+```kotlin
+if (hopperMq.isConnected) {
     println("HopperMq is connected to RabbitMQ!")
 }
 ```
@@ -171,7 +190,7 @@ hopperMq.removeQueue("queue-name")
 
 ### ➤ Closing the Connection
 
-Ensure proper resource cleanup:
+Since `HopperMq` implements `Closeable`, you should close it when no longer needed:
 
 ```kotlin
 hopperMq.close()
@@ -182,7 +201,6 @@ hopperMq.close()
 ## 📜 License
 
 This project is licensed under the **MIT License**.
-
 
 ---
 

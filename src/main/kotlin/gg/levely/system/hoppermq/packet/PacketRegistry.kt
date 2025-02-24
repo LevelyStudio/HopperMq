@@ -1,5 +1,6 @@
 package gg.levely.system.hoppermq.packet
 
+import org.reflections.Reflections
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Constructor
@@ -12,7 +13,17 @@ class PacketRegistry {
     private val packetToId: MutableMap<Class<out RabbitPacket>, String> = mutableMapOf()
     private val constructorPacket: MutableMap<Class<out RabbitPacket>, Constructor<out RabbitPacket>> = mutableMapOf()
 
-    fun register(id: String, packet: Class<out RabbitPacket>) {
+    fun register(packet: Class<out RabbitPacket>) {
+
+        if (!packet.isAnnotationPresent(RabbitPacketLabel::class.java)) {
+            logger.error("${packet.simpleName} does not have RabbitPacketLabel annotation")
+            return
+        }
+
+        val label = packet.getAnnotation<RabbitPacketLabel>(RabbitPacketLabel::class.java)
+        val id = label.value.takeIf { it.isNotEmpty() } ?: packet.simpleName
+
+
         if (id in idToPacket) {
             logger.error("$id has already been used by another packet (${idToPacket[id]})")
             return
@@ -24,13 +35,19 @@ class PacketRegistry {
         try {
             val declaredConstructor = packet.getDeclaredConstructor().apply { isAccessible = true }
             constructorPacket[packet] = declaredConstructor
+            logger.debug("Registered packet ${packet.simpleName} with id $id")
         } catch (e: NoSuchMethodException) {
             logger.error("Cannot find empty constructor in ${packet.simpleName}", e)
         }
     }
 
     fun register(packageName: String) {
-        IntelligentPacketRegistry.register(packageName, this)
+        val reflections = Reflections(packageName)
+
+        reflections.getTypesAnnotatedWith(RabbitPacketLabel::class.java).forEach { clazz ->
+            @Suppress("UNCHECKED_CAST")
+            this.register(clazz as Class<out RabbitPacket>)
+        }
     }
 
     fun getPacket(id: String): RabbitPacket? {

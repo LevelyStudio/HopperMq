@@ -16,8 +16,8 @@ class DefaultRabbitConsumer(private val hopperMq: HopperMq) : Consumer {
         private val LOGGER = LoggerFactory.getLogger(DefaultRabbitConsumer::class.java)
     }
 
-    private val rabbitBus = hopperMq.getRabbitBus()
-    private val packetRegistry = hopperMq.getPacketRegistry()
+    private val rabbitBus = hopperMq.rabbitBus
+    private val packetRegistry = hopperMq.packetRegistry
 
     override fun handleConsumeOk(consumerTag: String) {
         rabbitBus.publish(RabbitConsumerReadyEvent(consumerTag))
@@ -43,7 +43,7 @@ class DefaultRabbitConsumer(private val hopperMq: HopperMq) : Consumer {
     ) {
         val author = properties?.headers?.get("author")?.toString() ?: return
 
-        if (author == hopperMq.getAuthor()) return
+        if (author == hopperMq.author) return
 
         ByteArrayInputStream(body).use { byteArrayInputStream ->
             DataInputStream(byteArrayInputStream).use { dataInputStream ->
