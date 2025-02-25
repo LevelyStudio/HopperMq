@@ -141,7 +141,7 @@ Queues help in managing different communication channels.
 
 ```kotlin
 val selfQueue = RabbitQueue.of("self-${UUID.randomUUID()}") // Private queue
-val commonQueue = RabbitQueue.of("exchange-example-common", "example-common", BuiltinExchangeType.DIRECT) // Shared queue
+val commonQueue = RabbitQueue.of("exchange-example-common", "example-common", BuiltinExchangeType.TOPIC) // Shared queue
 
 hopperMq.bindQueue(selfQueue)
 hopperMq.bindQueue(commonQueue)
