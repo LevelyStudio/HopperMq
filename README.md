@@ -30,7 +30,7 @@ repositories {
 }
 
 dependencies {
-    implementation "gg.levely.system:hoppermq:0.1.3"
+    implementation "gg.levely.system:hoppermq:0.1.5"
 }
 ```
 
@@ -48,7 +48,7 @@ repositories {
 }
 
 dependencies {
-    implementation("gg.levely.system:hoppermq:0.1.3")
+    implementation("gg.levely.system:hoppermq:0.1.5")
 }
 ```
 
