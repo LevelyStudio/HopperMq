@@ -1,22 +1,58 @@
+---
+
 # 🐰 HopperMq
 
-HopperMq is a lightweight and efficient Kotlin library designed to simplify interactions with **RabbitMQ**, providing an intuitive API for message queuing, event-driven communication, and structured packet handling.
+**HopperMq** is a lightweight and efficient Kotlin library for **RabbitMQ**, offering an intuitive API for message queuing, event-driven communication, and structured packet handling — now powered by **KSP (Kotlin Symbol Processing)** for fast, reflection-free packet registration.
+
+---
 
 ## 🚀 Features
 
-- 📦 **Simplified RabbitMQ Integration** – Abstracts the complexity of managing connections, exchanges, and queues.
-- 🎯 **Packet-Based Messaging** – Allows structured data communication with serialization, deserialization, and metadata support.
-- 🛠 **Customizable Queues & Exchanges** – Supports both direct queues and exchange-based messaging.
-- 🎧 **Event-Driven Model** – Subscribe to packets effortlessly using an event bus.
-- 📋 **Packet Metadata Support** – Each packet can store additional contextual information.
+* 📦 **Simplified RabbitMQ Integration** – Abstracts connection, exchange, and queue setup.
+* 🎯 **Packet-Based Messaging** – Send structured data with serialization, deserialization, and metadata.
+* 🛠 **Customizable Queues & Exchanges** – Supports direct queues and exchange-based routing.
+* 🎧 **Event-Driven Model** – Subscribe to packets with a simple event bus.
+* 📋 **Packet Metadata Support** – Attach contextual info to each packet.
+* ⚙️ **KSP Support** – Compile-time packet registration (no reflection).
+* 🧱 **DSL Queue Builder** – Create queues using a clean, idiomatic builder function.
 
 ---
 
 ## 📥 Installation
 
-To install **HopperMq**, add the **[GitHub Packages](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry)** to your project:
+### 🔧 Apply Required Plugins
 
-### 🔹 Gradle (Groovy DSL)
+In your `build.gradle.kts` or `build.gradle`, apply the **KSP plugin**:
+
+```groovy
+plugins {
+   id 'org.jetbrains.kotlin.jvm' version '1.9.25'
+   id 'com.google.devtools.ksp' version '1.9.25-1.0.20'
+}
+```
+
+### 📦 Dependencies
+
+#### Kotlin DSL (build.gradle.kts)
+
+```kotlin
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/LevelyStudio/HopperMq")
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USER")
+            password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
+}
+
+dependencies {
+    implementation("gg.levely.system:hoppermq-core:0.2.0")
+    ksp("gg.levely.system:hoppermq-processor:0.2.0")
+}
+```
+
+#### Groovy DSL (build.gradle)
 
 ```groovy
 repositories {
@@ -30,72 +66,72 @@ repositories {
 }
 
 dependencies {
-    implementation "gg.levely.system:hoppermq:0.1.5"
+    implementation 'gg.levely.system:hoppermq-core:0.2.0'
+    ksp 'gg.levely.system:hoppermq-processor:0.2.0'
 }
 ```
 
-### 🔸 Gradle (Kotlin DSL)
+---
 
-```kotlin
-repositories {
-    maven {
-        url = uri("https://maven.pkg.github.com/LevelyStudio/HopperMq")
-        credentials {
-            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USER")
-            password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
-        }
-    }
-}
+## 🔐 Authentication Setup
 
-dependencies {
-    implementation("gg.levely.system:hoppermq:0.1.5")
-}
-```
+Since GitHub Packages requires authentication, provide a **GitHub Personal Access Token (PAT)** via:
 
-### 🛠 Authentication Setup
+* **Environment variables:**
 
-Since GitHub Packages requires authentication, you must provide a **GitHub Personal Access Token (PAT)**. You can either:
+  ```sh
+  export GITHUB_USER=your-username
+  export GITHUB_TOKEN=your-personal-access-token
+  ```
 
-1. **Set environment variables:**
-   ```sh
-   export GITHUB_USER=your-username
-   export GITHUB_TOKEN=your-personal-access-token
-   ```
+* **Or `gradle.properties`:**
 
-2. **Or define them in `gradle.properties`:**
-   ```properties
-   gpr.user=your-username
-   gpr.token=your-personal-access-token
-   ```
+  ```properties
+  gpr.user=your-username
+  gpr.token=your-personal-access-token
+  ```
 
 ---
 
 ## 🎯 Getting Started
 
-### 1️⃣ Initialize HopperMq
+### 1️⃣ Define Your Primary Queue
 
-Now, `HopperMq` requires an **author parameter** in the constructor:
+You can now initialize HopperMq directly with a queue:
 
 ```kotlin
-val hopperMq = HopperMq("amqp://your-rabbitmq-url", "YourAppName")
+val selfQueue = queueBuilder("YourAppName") {
+    setDurable(false)
+    setAutoDelete(false)
+}
 ```
 
-### 2️⃣ Creating a Packet (with Metadata Support)
+### 2️⃣ Initialize HopperMq
 
-Packets are structured messages that can be sent through RabbitMQ.
+Instead of passing a string name, pass the queue you defined:
+
+```kotlin
+val hopperMq = HopperMq("amqp://your-rabbitmq-url", selfQueue)
+```
+
+---
+
+### 3️⃣ Define a Packet
+
+Each packet must be annotated with `@RabbitPacketLabel` for KSP to process it:
 
 ```kotlin
 @RabbitPacketLabel
 class ExamplePacket : RabbitPacket {
-    
+
     lateinit var message: String
-    
-    private constructor() // Required for deserialization
-    
+
+    private constructor()
+
     constructor(message: String) {
         this.message = message
     }
-    
+
     override fun write(output: DataOutputStream) {
         output.writeUTF(message)
     }
@@ -106,90 +142,99 @@ class ExamplePacket : RabbitPacket {
 }
 ```
 
-### 3️⃣ Registering a Packet
+---
 
-Before sending or receiving packets, they must be **registered** in the `PacketRegistry`.
+### 4️⃣ Register Packets via KSP
+
+Reflection is no longer used. Register packets using the KSP-generated registry:
 
 ```kotlin
 val packetRegistry = hopperMq.packetRegistry
 
-packetRegistry.register(ExamplePacket::class.java)
+GeneratedPacketRegistry.registerAll(packetRegistry)
 ```
 
-> **💡 Automatic Registration:**  
-> You can also register all packets within a specific package automatically:
-> ```kotlin
-> packetRegistry.register("com.yourpackage.packets")
-> ```
-> 🚨 **Important:** For this to work, all packets in the package **must be annotated with** `@RabbitPacketLabel`. Otherwise, they won't be detected.
+> ✅ `GeneratedPacketRegistry` is generated automatically by the HopperMq KSP processor.
 
-### 4️⃣ Listening for Packets
+---
 
-To handle incoming packets, subscribe to them via the event bus.
+## 🧱 Defining Queues Using `queueBuilder`
+
+The `queueBuilder` DSL lets you define queues in a clean, idiomatic way:
+
+### 🔹 Private Queue
 
 ```kotlin
-val rabbitBus = hopperMq.rabbitBus
-
-rabbitBus.subscribe(ExamplePacket::class.java) { event ->
-    println("Received packet with message: ${event.message}, sent by ${event.author ?: "Unknown"}")
+val exampleQueue = queueBuilder("default") {
+    setDurable(false)
+    setAutoDelete(false)
 }
 ```
 
-### 5️⃣ Creating and Binding Queues
-
-Queues help in managing different communication channels.
+### 🔸 Exchange-Based Queue
 
 ```kotlin
-val selfQueue = RabbitQueue.of("self-${UUID.randomUUID()}") // Private queue
-val commonQueue = RabbitQueue.of("exchange-example-common", "example-common", BuiltinExchangeType.TOPIC) // Shared queue
-
-hopperMq.bindQueue(selfQueue)
-hopperMq.bindQueue(commonQueue)
+val exchangeQueue = queueBuilder(
+    queue = "globalExample",
+    exchange = "global-example-shared",
+    type = BuiltinExchangeType.TOPIC
+) {
+    setDurable(false)
+    setAutoDelete(false)
+}
 ```
 
-### 6️⃣ Sending a Packet
-
-Once the packet is registered, you can send it to a queue.
+Bind queues to HopperMq:
 
 ```kotlin
-hopperMq.publish(commonQueue, ExamplePacket("Hello from HopperMq!"))
+hopperMq.bindQueue(exampleQueue)
+hopperMq.bindQueue(exchangeQueue)
 ```
 
 ---
 
-## 📌 Advanced Usage
+## 📤 Sending and Receiving Packets
 
-### ➤ Accessing Packet Metadata
-
-Packets now support metadata, allowing extra contextual information to be attached.
+### Subscribe to a Packet
 
 ```kotlin
-val packet = ExamplePacket("Test Message")
-packet.metadata["timestamp"] = System.currentTimeMillis()
-
-println("Packet Author: ${packet.metadata["author"]}")
-println("Timestamp: ${packet.metadata["timestamp"]}")
-```
-
-### ➤ Check Connection Status
-
-Instead of `hopperMq.isConnected()`, **use the new computed property**:
-
-```kotlin
-if (hopperMq.isConnected) {
-    println("HopperMq is connected to RabbitMQ!")
+hopperMq.rabbitBus.subscribe(ExamplePacket::class.java) { event ->
+    println("Received: ${event.message} from ${event.author ?: "Unknown"}")
 }
 ```
 
-### ➤ Remove a Queue
+### Publish a Packet
+
+```kotlin
+hopperMq.publish(exchangeQueue, ExamplePacket("Hello from HopperMq!"))
+```
+
+---
+
+## 📌 Advanced Features
+
+### 🧠 Packet Metadata
+
+```kotlin
+val packet = ExamplePacket("Test message")
+packet.metadata["timestamp"] = System.currentTimeMillis()
+```
+
+### 🟢 Check Connection
+
+```kotlin
+if (hopperMq.isConnected) {
+    println("Connected to RabbitMQ!")
+}
+```
+
+### 🗑 Remove a Queue
 
 ```kotlin
 hopperMq.removeQueue("queue-name")
 ```
 
-### ➤ Closing the Connection
-
-Since `HopperMq` implements `Closeable`, you should close it when no longer needed:
+### 🔒 Clean Shutdown
 
 ```kotlin
 hopperMq.close()
@@ -205,4 +250,4 @@ This project is licensed under the **MIT License**.
 
 🐰 **Happy Messaging with HopperMq!** 🚀
 
-
+---
