@@ -23,7 +23,7 @@ class RabbitPacketProcessor(
 
         file.bufferedWriter().use { writer ->
             writer.write("package gg.levely.system.hoppermq.generated\n\n")
-            writer.write("import gg.levely.system.hoppermq.core.packet.PacketRegistry\n")
+            writer.write("import gg.levely.system.hoppermq.core.packet.RabbitPacketRegistry\n")
 
             symbols.forEach {
                 val import = it.qualifiedName?.asString()
@@ -34,7 +34,7 @@ class RabbitPacketProcessor(
 
             writer.write("object GeneratedPacketRegistry {\n")
             writer.write("\n")
-            writer.write("    fun registerAll(registry: PacketRegistry) {\n")
+            writer.write("    fun registerAll(registry: RabbitPacketRegistry) {\n")
 
             symbols.forEach {
                 val className = it.simpleName.asString()
