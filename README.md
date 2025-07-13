@@ -1,5 +1,3 @@
----
-
 # 🐰 HopperMq
 
 **HopperMq** is a lightweight and efficient Kotlin library for **RabbitMQ**, offering an intuitive API for message queuing, event-driven communication, and structured packet handling — now powered by **KSP (Kotlin Symbol Processing)** for fast, reflection-free packet registration.
