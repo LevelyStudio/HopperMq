@@ -7,6 +7,43 @@ plugins {
 group = 'gg.levely'
 version = project.findProperty("version")
 
+allprojects {
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+    apply plugin: 'kotlin'
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+
+        maven {
+            url = uri("https://maven.pkg.github.com/LevelyStudio/EventBus")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USER")
+                password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
+
+subprojects {
+
+    version = rootProject.version
+    group = rootProject.group
+
+    def baseName = project.parent != rootProject
+            ? "${rootProject.name}-${project.parent.name.capitalize()}-${project.name.capitalize()}"
+            : "${rootProject.name}-${project.name.capitalize()}"
+
+    archivesBaseName = baseName
+
+    kotlin {
+        jvmToolchain(8)
+    }
+
+}
+
+/*
 repositories {
     mavenCentral()
 
@@ -68,3 +105,4 @@ publishing {
 kotlin {
     jvmToolchain(8)
 }
+*/
