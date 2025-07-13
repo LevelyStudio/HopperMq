@@ -3,11 +3,6 @@ dependencies {
     implementation project(":core")
 }
 
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
-
 publishing {
     publications {
         mavenJava(MavenPublication) {

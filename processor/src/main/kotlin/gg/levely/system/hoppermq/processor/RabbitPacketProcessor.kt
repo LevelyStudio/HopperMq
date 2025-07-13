@@ -1,11 +1,12 @@
 package gg.levely.system.hoppermq.processor
 
 import com.google.devtools.ksp.processing.*
-import com.google.devtools.ksp.symbol.*
+import com.google.devtools.ksp.symbol.KSAnnotated
+import com.google.devtools.ksp.symbol.KSClassDeclaration
 
 class RabbitPacketProcessor(
     private val codeGenerator: CodeGenerator,
-    private val logger: KSPLogger
+    private val logger: KSPLogger,
 ) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -36,11 +37,9 @@ class RabbitPacketProcessor(
             writer.write("    fun registerAll(registry: PacketRegistry) {\n")
 
             symbols.forEach {
-                val className = it.simpleName?.asString()
+                val className = it.simpleName.asString()
                 logger.warn("Registering RabbitPacket: $className")
-                if (className != null) {
-                    writer.write("        registry.register($className::class.java)\n")
-                }
+                writer.write("        registry.register($className::class.java)\n")
             }
 
             writer.write("    }\n")

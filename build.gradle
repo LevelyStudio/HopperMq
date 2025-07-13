@@ -41,68 +41,13 @@ subprojects {
         jvmToolchain(8)
     }
 
-}
+    java {
+        withSourcesJar()
+        withJavadocJar()
 
-/*
-repositories {
-    mavenCentral()
-
-    maven {
-        url = uri("https://maven.pkg.github.com/LevelyStudio/EventBus")
-        credentials {
-            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USER")
-            password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
-        }
-    }
-}
-
-ext {
-    kotlinVersion = "2.1.10"
-    amqpClientVersion = "5.25.0"
-    eventBusVersion = "1.0.2"
-    reflectionsVersion = "0.10.2"
-    logbackVersion = "1.3.15"
-}
-
-dependencies {
-    api "com.rabbitmq:amqp-client:$amqpClientVersion"
-    api "gg.levely.system:eventbus:$eventBusVersion"
-
-    api "org.reflections:reflections:$reflectionsVersion"
-    api "ch.qos.logback:logback-classic:$logbackVersion"
-}
-
-java {
-    withSourcesJar()
-
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = 'gg.levely.system'
-            artifactId = 'hoppermq'
-
-            from components.java
-        }
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/${System.getenv("GITHUB_REPOSITORY")}")
-            credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-                password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
-            }
-        }
-    }
 }
 
-
-kotlin {
-    jvmToolchain(8)
-}
-*/

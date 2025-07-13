@@ -1,19 +1,6 @@
 package gg.levely.system.hoppermq.core
 
-import com.rabbitmq.client.BuiltinExchangeType
-import com.sun.deploy.util.Property
-
 interface RabbitQueue {
-
-/*    companion object {
-
-        @JvmStatic
-        fun of(queue: String): RabbitQueue = DefaultRabbitQueue(queue)
-
-        @JvmStatic
-        fun of(exchange: String, queue: String, type: BuiltinExchangeType): RabbitQueue = DefaultRabbitEQueue(queue, exchange, type)
-
-    }*/
 
     fun getQueue(): String
 
@@ -30,7 +17,7 @@ fun queueBuilder(queue: String, property: DefaultRabbitQueue.() -> Unit = {}): R
 data class DefaultRabbitQueue(
     private val queue: String,
     private var durable: Boolean = false,
-    private var autoDelete: Boolean = true
+    private var autoDelete: Boolean = true,
 ) : RabbitQueue {
 
     override fun getQueue(): String = queue

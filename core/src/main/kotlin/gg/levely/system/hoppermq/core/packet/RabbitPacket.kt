@@ -3,7 +3,6 @@ package gg.levely.system.hoppermq.core.packet
 import gg.levely.system.hoppermq.core.event.RabbitEvent
 import java.io.DataInputStream
 import java.io.DataOutputStream
-import java.lang.Exception
 
 abstract class RabbitPacket : RabbitEvent {
 
