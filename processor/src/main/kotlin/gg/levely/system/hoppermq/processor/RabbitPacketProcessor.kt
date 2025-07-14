@@ -6,6 +6,7 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 
 class RabbitPacketProcessor(
     private val codeGenerator: CodeGenerator,
+    private val options: Map<String, String>,
     private val logger: KSPLogger,
 ) : SymbolProcessor {
 
@@ -15,10 +16,13 @@ class RabbitPacketProcessor(
 
         if (!symbols.iterator().hasNext()) return emptyList()
 
+        val moduleName = options["moduleName"] ?: ""
+        val generatorClazzName = "${moduleName}GeneratedPacketRegistry"
+
         val file = codeGenerator.createNewFile(
-            Dependencies(false),
+            Dependencies(false, *resolver.getAllFiles().toList().toTypedArray()),
             packageName = "gg.levely.system.hoppermq.generated",
-            fileName = "GeneratedPacketRegistry"
+            fileName = generatorClazzName,
         )
 
         file.bufferedWriter().use { writer ->
@@ -32,7 +36,7 @@ class RabbitPacketProcessor(
 
             writer.write("\n")
 
-            writer.write("object GeneratedPacketRegistry {\n")
+            writer.write("object $generatorClazzName {\n")
             writer.write("\n")
             writer.write("    fun registerAll(registry: RabbitPacketRegistry) {\n")
 
