@@ -20,7 +20,7 @@ class DefaultRabbitConsumer(private val hopperMq: HopperMq) : Consumer {
     private val packetRegistry = hopperMq.rabbitPacketRegistry
 
     override fun handleConsumeOk(consumerTag: String) {
-        rabbitBus.publish(RabbitConsumerReadyEvent(consumerTag))
+        rabbitBus.publish(RabbitConsumerReadyEvent(hopperMq.getQueue(consumerTag)))
     }
 
     override fun handleCancelOk(consumerTag: String) = Unit

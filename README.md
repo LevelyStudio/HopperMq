@@ -45,8 +45,8 @@ repositories {
 }
 
 dependencies {
-    implementation("gg.levely.system:hoppermq-core:0.2.1")
-    ksp("gg.levely.system:hoppermq-processor:0.2.1")
+    implementation("gg.levely.system:hoppermq-core:0.2.2")
+    ksp("gg.levely.system:hoppermq-processor:0.2.2")
 }
 ```
 
@@ -64,8 +64,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'gg.levely.system:hoppermq-core:0.2.1'
-    ksp 'gg.levely.system:hoppermq-processor:0.2.1'
+    implementation 'gg.levely.system:hoppermq-core:0.2.2'
+    ksp 'gg.levely.system:hoppermq-processor:0.2.2'
 }
 ```
 

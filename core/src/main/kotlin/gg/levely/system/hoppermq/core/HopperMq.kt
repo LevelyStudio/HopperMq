@@ -14,6 +14,8 @@ import java.io.ByteArrayOutputStream
 import java.io.Closeable
 import java.io.DataOutputStream
 import java.io.IOException
+import java.util.concurrent.LinkedBlockingQueue
+import kotlin.concurrent.thread
 
 class HopperMq(url: String, val author: String) : Closeable {
 
@@ -30,6 +32,17 @@ class HopperMq(url: String, val author: String) : Closeable {
     private val defaultRabbitConsumer = DefaultRabbitConsumer(this)
     private val queues = mutableMapOf<String, RabbitQueue>()
 
+    private val publishQueue = LinkedBlockingQueue<() -> Unit>()
+    private val publishThread = thread(isDaemon = true, name = "HopperMq-Publisher-$author") {
+        while (!Thread.currentThread().isInterrupted) {
+            try {
+                publishQueue.take().invoke()
+            } catch (e: InterruptedException) {
+                break
+            }
+        }
+    }
+
     constructor(url: String, selfQueue: RabbitQueue) : this(url, selfQueue.getQueue()) {
         bindQueue(selfQueue)
     }
@@ -38,14 +51,18 @@ class HopperMq(url: String, val author: String) : Closeable {
         try {
             val connectionFactory = ConnectionFactory().apply {
                 setUri(url)
-                requestedHeartbeat = 60
+
                 isAutomaticRecoveryEnabled = true
-                isTopologyRecoveryEnabled = true
+                networkRecoveryInterval = 10000
+                requestedHeartbeat = 60
+                connectionTimeout = 30000
+
                 setErrorOnWriteListener { _, exception -> logger.error("Write error in RabbitMQ", exception) }
             }
 
             connection = connectionFactory.newConnection(author)
             channel = connection.createChannel()
+            channel.confirmSelect()
 
             logger.info("HopperMq successfully initialized for author: $author")
         } catch (e: Exception) {
@@ -89,40 +106,47 @@ class HopperMq(url: String, val author: String) : Closeable {
     }
 
     fun publish(rabbitQueue: RabbitQueue, packet: RabbitPacket, sendToSelf: Boolean = false) {
-        try {
-            val id = rabbitPacketRegistry.getId(packet::class.java) ?: return
-            val byteArrayOutputStream = ByteArrayOutputStream()
-            DataOutputStream(byteArrayOutputStream).use { dataOutput ->
-                dataOutput.writeUTF(id)
-                packet.write(dataOutput)
+        publishQueue.offer {
+            try {
+                val id = rabbitPacketRegistry.getId(packet::class.java) ?: return@offer
+                val byteArrayOutputStream = ByteArrayOutputStream()
+                DataOutputStream(byteArrayOutputStream).use { dataOutput ->
+                    dataOutput.writeUTF(id)
+                    packet.write(dataOutput)
+                }
+
+                val properties = mutableMapOf<String, Any>()
+                properties["author"] = author
+
+                packet.metadata.forEach { (key, value) -> properties[key] = value }
+
+                val amqpProperties = AMQP.BasicProperties.Builder()
+                    .headers(properties)
+                    .build()
+
+                if (rabbitQueue is RabbitEQueue) {
+                    channel.basicPublish(
+                        rabbitQueue.getExchange(),
+                        rabbitQueue.getQueue(),
+                        amqpProperties,
+                        byteArrayOutputStream.toByteArray()
+                    )
+                } else {
+                    channel.basicPublish(
+                        "",
+                        rabbitQueue.getQueue(),
+                        amqpProperties,
+                        byteArrayOutputStream.toByteArray()
+                    )
+                }
+
+                if (sendToSelf) {
+                    rabbitBus.publish(packet)
+                }
+
+            } catch (e: Exception) {
+                logger.error("Failed to publish packet to ${rabbitQueue.getQueue()}", e)
             }
-
-            val properties = mutableMapOf<String, Any>()
-            properties["author"] = author
-
-            packet.metadata.forEach { (key, value) -> properties[key] = value }
-
-            val amqpProperties = AMQP.BasicProperties.Builder()
-                .headers(properties)
-                .build()
-
-            if (rabbitQueue is RabbitEQueue) {
-                channel.basicPublish(
-                    rabbitQueue.getExchange(),
-                    rabbitQueue.getQueue(),
-                    amqpProperties,
-                    byteArrayOutputStream.toByteArray()
-                )
-            } else {
-                channel.basicPublish("", rabbitQueue.getQueue(), amqpProperties, byteArrayOutputStream.toByteArray())
-            }
-
-            if (sendToSelf) {
-                rabbitBus.publish(packet)
-            }
-
-        } catch (e: Exception) {
-            logger.error("Failed to publish packet to ${rabbitQueue.getQueue()}", e)
         }
     }
 
@@ -143,8 +167,14 @@ class HopperMq(url: String, val author: String) : Closeable {
         removeQueue(rabbitQueue.getQueue())
     }
 
+    internal fun getQueue(queue: String): RabbitQueue {
+        return queues.getOrElse(queue) { queueBuilder(queue) }
+    }
+
     override fun close() {
         try {
+            publishThread.interrupt()
+            channel.close()
             connection.close()
             logger.info("HopperMq closed successfully")
         } catch (e: IOException) {
