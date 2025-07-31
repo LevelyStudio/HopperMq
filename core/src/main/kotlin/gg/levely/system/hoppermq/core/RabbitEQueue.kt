@@ -10,13 +10,14 @@ interface RabbitEQueue : RabbitQueue {
 
 }
 
+@JvmOverloads
 fun queueBuilder(
-    queue: String,
+    routingKey: String,
     exchange: String,
     type: BuiltinExchangeType,
     property: DefaultRabbitEQueue.() -> Unit = {}
 ): RabbitEQueue {
-    return DefaultRabbitEQueue(queue, exchange, type).apply(property)
+    return DefaultRabbitEQueue(routingKey, exchange, type).apply(property)
 }
 
 data class DefaultRabbitEQueue(

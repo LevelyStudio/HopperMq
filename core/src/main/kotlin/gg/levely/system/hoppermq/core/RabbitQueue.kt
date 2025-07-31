@@ -10,6 +10,7 @@ interface RabbitQueue {
 
 }
 
+@JvmOverloads
 fun queueBuilder(queue: String, property: DefaultRabbitQueue.() -> Unit = {}): RabbitQueue {
     return DefaultRabbitQueue(queue).apply(property)
 }
