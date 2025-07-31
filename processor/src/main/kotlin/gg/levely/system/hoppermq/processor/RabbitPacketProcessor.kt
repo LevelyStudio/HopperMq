@@ -44,7 +44,7 @@ class RabbitPacketProcessor(
             symbols.forEach {
                 val className = it.simpleName.asString()
                 logger.warn("Registering RabbitPacket: $className")
-                writer.write("        registry.register($className::class.java)\n")
+                writer.write("        registry.register($className::class)\n")
             }
 
             writer.write("    }\n")
