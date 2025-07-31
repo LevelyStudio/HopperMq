@@ -2,38 +2,49 @@ package gg.levely.system.hoppermq.core.packet
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.lang.IllegalArgumentException
 import java.lang.reflect.Constructor
+import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.primaryConstructor
 
 class RabbitPacketRegistry {
 
     private val logger: Logger = LoggerFactory.getLogger(RabbitPacketRegistry::class.java)
 
-    private val idToPacket: MutableMap<String, Class<out RabbitPacket>> = mutableMapOf()
-    private val packetToId: MutableMap<Class<out RabbitPacket>, String> = mutableMapOf()
-    private val constructorPacket: MutableMap<Class<out RabbitPacket>, Constructor<out RabbitPacket>> = mutableMapOf()
+    private val idToPacket: MutableMap<String, KClass<out RabbitPacket>> = mutableMapOf()
+    private val packetToId: MutableMap<KClass<out RabbitPacket>, String> = mutableMapOf()
+    private val constructorPacket: MutableMap<KClass<out RabbitPacket>, KFunction<RabbitPacket>> = mutableMapOf()
 
-    fun register(packet: Class<out RabbitPacket>) {
-
-        if (!packet.isAnnotationPresent(RabbitPacketLabel::class.java)) {
+    fun register(packet: KClass<out RabbitPacket>) {
+        val rabbitPacketLabel = packet.findAnnotation<RabbitPacketLabel>()
+        if (rabbitPacketLabel == null) {
             logger.error("${packet.simpleName} does not have RabbitPacketLabel annotation")
             return
         }
 
-        val label = packet.getAnnotation(RabbitPacketLabel::class.java)
-        val id = label.value.takeIf { it.isNotEmpty() } ?: packet.simpleName
+        val id = rabbitPacketLabel.value.takeIf { it.isNotEmpty() } ?: packet.simpleName
 
+        if (id == null) {
+            logger.error("Packet ${packet.simpleName} does not have a valid id")
+            return
+        }
 
         if (id in idToPacket) {
             logger.error("$id has already been used by another packet (${idToPacket[id]})")
             return
         }
 
-        idToPacket[id] = packet
-        packetToId[packet] = id
-
         try {
-            val declaredConstructor = packet.getDeclaredConstructor().apply { isAccessible = true }
-            constructorPacket[packet] = declaredConstructor
+            val noArgsConstructor = packet.constructors.singleOrNull { it.parameters.all(KParameter::isOptional) }
+                ?: throw IllegalArgumentException("Class should have a single no-arg constructor: ${packet.simpleName}")
+            constructorPacket[packet] = noArgsConstructor
+
+            idToPacket[id] = packet
+            packetToId[packet] = id
+
             logger.debug("Registered packet ${packet.simpleName} with id $id")
         } catch (e: NoSuchMethodException) {
             logger.error("Cannot find empty constructor in ${packet.simpleName}", e)
@@ -45,14 +56,14 @@ class RabbitPacketRegistry {
         val constructor = constructorPacket[packetClass] ?: return null
 
         return runCatching {
-            constructor.newInstance()
+            constructor.call()
         }.getOrElse {
             logger.error("Cannot create instance for ${packetClass.simpleName}", it)
             null
         }
     }
 
-    fun getId(clazz: Class<out RabbitPacket>): String? = packetToId[clazz]
+    fun getId(clazz: KClass<out RabbitPacket>): String? = packetToId[clazz]
 
-    fun getAllPackets(): Map<String, Class<out RabbitPacket>> = idToPacket.toMap()
+    fun getAllPackets(): Map<String, KClass<out RabbitPacket>> = idToPacket.toMap()
 }

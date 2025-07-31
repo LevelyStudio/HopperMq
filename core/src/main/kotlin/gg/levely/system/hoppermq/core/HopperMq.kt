@@ -10,8 +10,10 @@ import gg.levely.system.hoppermq.core.packet.RabbitPacket
 import gg.levely.system.hoppermq.core.packet.RabbitPacketRegistry
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
+import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.IOException
 import java.util.concurrent.LinkedBlockingQueue
@@ -64,6 +66,12 @@ class HopperMq(url: String, val author: String) : Closeable {
             channel = connection.createChannel()
             channel.confirmSelect()
 
+            channel.addReturnListener { replyCode, replyText, exchange, routingKey, properties, body ->
+                val dataInputStream = DataInputStream(body.inputStream())
+                val id = dataInputStream.readUTF()
+                logger.warn("Packet with ID $id returned: $replyCode - $replyText")
+            }
+
             logger.info("HopperMq successfully initialized for author: $author")
         } catch (e: Exception) {
             throw RuntimeException("Failed to initialize HopperMq", e)
@@ -105,10 +113,12 @@ class HopperMq(url: String, val author: String) : Closeable {
         publish(rabbitQueue, packet)
     }
 
+    @JvmOverloads
     fun publish(rabbitQueue: RabbitQueue, packet: RabbitPacket, sendToSelf: Boolean = false) {
         publishQueue.offer {
             try {
-                val id = rabbitPacketRegistry.getId(packet::class.java) ?: return@offer
+
+                val id = rabbitPacketRegistry.getId(packet::class) ?: return@offer
                 val byteArrayOutputStream = ByteArrayOutputStream()
                 DataOutputStream(byteArrayOutputStream).use { dataOutput ->
                     dataOutput.writeUTF(id)
@@ -116,9 +126,8 @@ class HopperMq(url: String, val author: String) : Closeable {
                 }
 
                 val properties = mutableMapOf<String, Any>()
-                properties["author"] = author
-
                 packet.metadata.forEach { (key, value) -> properties[key] = value }
+                properties["author"] = author
 
                 val amqpProperties = AMQP.BasicProperties.Builder()
                     .headers(properties)
@@ -128,6 +137,7 @@ class HopperMq(url: String, val author: String) : Closeable {
                     channel.basicPublish(
                         rabbitQueue.getExchange(),
                         rabbitQueue.getQueue(),
+                        true,
                         amqpProperties,
                         byteArrayOutputStream.toByteArray()
                     )
@@ -135,6 +145,7 @@ class HopperMq(url: String, val author: String) : Closeable {
                     channel.basicPublish(
                         "",
                         rabbitQueue.getQueue(),
+                        true,
                         amqpProperties,
                         byteArrayOutputStream.toByteArray()
                     )
