@@ -6,6 +6,8 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaConstructor
 
 class RabbitPacketRegistry {
 
@@ -37,8 +39,10 @@ class RabbitPacketRegistry {
         try {
             val noArgsConstructor = packet.constructors.singleOrNull { it.parameters.all(KParameter::isOptional) }
                 ?: throw IllegalArgumentException("Class should have a single no-arg constructor: ${packet.simpleName}")
-            constructorPacket[packet] = noArgsConstructor
 
+            noArgsConstructor.isAccessible = true
+
+            constructorPacket[packet] = noArgsConstructor
             idToPacket[id] = packet
             packetToId[packet] = id
 
