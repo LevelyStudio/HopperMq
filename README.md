@@ -1,6 +1,8 @@
 # 🐰 HopperMq
 
-**HopperMq** is a lightweight and efficient Kotlin library for **RabbitMQ**, offering an intuitive API for message queuing, event-driven communication, and structured packet handling — now powered by **KSP (Kotlin Symbol Processing)** for fast, reflection-free packet registration.
+**HopperMq** is a lightweight and efficient Kotlin library for **RabbitMQ**, offering an intuitive API for message
+queuing, event-driven communication, and structured packet handling — now powered by **KSP (Kotlin Symbol Processing)**
+for fast, reflection-free packet registration.
 
 ---
 
@@ -45,8 +47,8 @@ repositories {
 }
 
 dependencies {
-    implementation("gg.levely.system:hoppermq-core:0.2.2")
-    ksp("gg.levely.system:hoppermq-processor:0.2.2")
+    implementation("gg.levely.system:hoppermq-core:0.2.3")
+    ksp("gg.levely.system:hoppermq-processor:0.2.3")
 }
 ```
 
@@ -64,8 +66,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'gg.levely.system:hoppermq-core:0.2.2'
-    ksp 'gg.levely.system:hoppermq-processor:0.2.2'
+    implementation 'gg.levely.system:hoppermq-core:0.2.3'
+    ksp 'gg.levely.system:hoppermq-processor:0.2.3'
 }
 ```
 
