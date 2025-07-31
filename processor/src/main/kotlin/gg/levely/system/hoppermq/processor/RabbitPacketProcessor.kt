@@ -38,6 +38,7 @@ class RabbitPacketProcessor(
 
             writer.write("object $generatorClazzName {\n")
             writer.write("\n")
+            writer.write("    @JvmStatic\n")
             writer.write("    fun registerAll(registry: RabbitPacketRegistry) {\n")
 
             symbols.forEach {
