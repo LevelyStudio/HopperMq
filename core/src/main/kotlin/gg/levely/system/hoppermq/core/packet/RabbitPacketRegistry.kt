@@ -40,7 +40,7 @@ class RabbitPacketRegistry {
             val noArgsConstructor = packet.constructors.singleOrNull { it.parameters.all(KParameter::isOptional) }
                 ?: throw IllegalArgumentException("Class should have a single no-arg constructor: ${packet.simpleName}")
 
-            noArgsConstructor.isAccessible = true
+            noArgsConstructor.javaConstructor?.isAccessible = true
 
             constructorPacket[packet] = noArgsConstructor
             idToPacket[id] = packet
