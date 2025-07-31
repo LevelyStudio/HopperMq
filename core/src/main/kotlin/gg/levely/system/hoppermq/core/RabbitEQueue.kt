@@ -15,7 +15,7 @@ fun queueBuilder(
     routingKey: String,
     exchange: String,
     type: BuiltinExchangeType,
-    property: DefaultRabbitEQueue.() -> Unit = {}
+    property: DefaultRabbitEQueue.() -> Unit = {},
 ): RabbitEQueue {
     return DefaultRabbitEQueue(routingKey, exchange, type).apply(property)
 }
@@ -25,7 +25,7 @@ data class DefaultRabbitEQueue(
     private val exchange: String,
     private val type: BuiltinExchangeType,
     private var durable: Boolean = false,
-    private var autoDelete: Boolean = true
+    private var autoDelete: Boolean = true,
 ) : RabbitEQueue {
 
     override fun getQueue(): String = queue
