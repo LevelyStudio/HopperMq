@@ -19,7 +19,7 @@ class HopperMq(url: String, val author: String) : Closeable {
     private val logger: Logger = LoggerFactory.getLogger(HopperMq::class.java)
 
     val connection: Connection
-    val channel: Channel
+    var channel: Channel
     val rabbitBus = EventBus<RabbitEvent>()
     val rabbitPacketRegistry = RabbitPacketRegistry()
 
@@ -151,7 +151,8 @@ class HopperMq(url: String, val author: String) : Closeable {
                 }
 
             } catch (e: Exception) {
-                logger.error("Failed to publish packet to ${rabbitQueue.getQueue()}", e)
+                logger.error("Failed to publish packet to ${rabbitQueue.getQueue()} caused by: ${e.message}, retrying...")
+                channel = connection.createChannel() // Recreate channel if it was closed
             }
         }
     }
