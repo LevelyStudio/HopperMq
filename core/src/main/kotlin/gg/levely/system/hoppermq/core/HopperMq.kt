@@ -153,6 +153,8 @@ class HopperMq(url: String, val author: String) : Closeable {
             } catch (e: Exception) {
                 logger.error("Failed to publish packet to ${rabbitQueue.getQueue()} caused by: ${e.message}, retrying...")
                 channel = connection.createChannel() // Recreate channel if it was closed
+                val queues = getQueues()
+                queues.forEach { bindQueue(it) } // Rebind all queues
             }
         }
     }
@@ -176,6 +178,10 @@ class HopperMq(url: String, val author: String) : Closeable {
 
     internal fun getQueue(queue: String): RabbitQueue {
         return queues.getOrElse(queue) { queueBuilder(queue) }
+    }
+
+    private fun getQueues(): List<RabbitQueue> {
+        return queues.values.toList()
     }
 
     override fun close() {
